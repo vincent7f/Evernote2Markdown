@@ -397,13 +397,14 @@ def main() -> int:
 
     total_notes = total_out[0] if total_out[0] is not None else 0
     skipped = skipped_title + skipped_unchanged + skipped_conflict + skipped_read_error
-    print(
-        f"Summary: total notes (search)={total_notes}; "
-        f"skipped={skipped} "
-        f"(title mismatch={skipped_title}, unchanged={skipped_unchanged}, "
-        f"conflict skip={skipped_conflict}, read error={skipped_read_error}); "
-        f"new={exported}"
-    )
+    print("Summary:")
+    print(f"  total notes (search)={total_notes}")
+    print(f"  skipped={skipped}")
+    print(f"    title mismatch={skipped_title}")
+    print(f"    unchanged={skipped_unchanged}")
+    print(f"    conflict skip={skipped_conflict}")
+    print(f"    read error={skipped_read_error}")
+    print(f"  new={exported}")
 
     if exported == 0:
         print(
