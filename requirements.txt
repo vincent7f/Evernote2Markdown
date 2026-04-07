@@ -1,0 +1,11 @@
+# `evernote` on PyPI uses Python 2 setup.py (`exec x`) and fails to build on Python 3+.
+# `evernote3` ships py3-none wheels (same `evernote.*` imports). It loads `oauth2` at runtime
+# but does not list it—pin the 1.9.0.post1 wheel. `oauth2` still uses distutils on 3.12+;
+# `setuptools` supplies the compatibility layer (see early import in the export script).
+evernote3>=1.25.14
+oauth2>=1.9.0.post1
+setuptools>=63.4.3
+beautifulsoup4>=4.12.0
+certifi>=2024.0.0
+lxml>=5.0.0
+html2text>=2024.2.26
