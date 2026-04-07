@@ -270,8 +270,12 @@ def iter_note_guids(
     note_store,
     words: str,
     page_size: int,
+    total_out: list[int | None],
 ) -> Iterable[tuple[str, str]]:
-    """Yield (guid, title) for all notes matching the search words."""
+    """Yield (guid, title) for all notes matching the search words.
+
+    On the first API response, sets total_out[0] to totalNotes (search hit count).
+    """
     nf = NoteFilter()
     nf.words = words
 
@@ -282,6 +286,8 @@ def iter_note_guids(
     offset = 0
     while True:
         batch = note_store.findNotesMetadata(nf, offset, page_size, spec)
+        if total_out[0] is None:
+            total_out[0] = int(batch.totalNotes)
         for meta in batch.notes:
             yield meta.guid, meta.title or ""
         offset += len(batch.notes)
@@ -334,11 +340,17 @@ def main() -> int:
 
     page = max(1, min(args.page_size, 250))
     exported = 0
+    skipped_title = 0
+    skipped_unchanged = 0
+    skipped_conflict = 0
+    skipped_read_error = 0
+    total_out: list[int | None] = [None]
     used_names: set[str] = set()
 
     try:
-        for guid, title in iter_note_guids(note_store, search, page):
+        for guid, title in iter_note_guids(note_store, search, page, total_out):
             if (title or "").strip().casefold() != title_want:
+                skipped_title += 1
                 continue
             enml = note_store.getNoteContent(guid)
             md = enml_to_markdown(enml)
@@ -351,17 +363,20 @@ def main() -> int:
                     existing = _read_utf8(path)
                 except OSError as e:
                     print(f"Could not read {path}: {e}", file=sys.stderr)
+                    skipped_read_error += 1
                     continue
                 if _normalize_text(existing) == _normalize_text(md):
                     print(f"skip (unchanged): {path}")
                     _maybe_rename_after_export(
                         note_store, guid, post_title, args.no_rename_after_export
                     )
+                    skipped_unchanged += 1
                     continue
 
                 action = _resolve_conflict_action(args.on_conflict, path)
                 if action == "skip":
                     print(f"skip: {path}")
+                    skipped_conflict += 1
                     continue
                 if action == "keep-both":
                     name, path = _first_free_name_on_disk(out_dir, base, ".md", used_names)
@@ -379,6 +394,16 @@ def main() -> int:
     except (EDAMUserException, EDAMSystemException) as e:
         print(f"Evernote API error: {e}", file=sys.stderr)
         return 1
+
+    total_notes = total_out[0] if total_out[0] is not None else 0
+    skipped = skipped_title + skipped_unchanged + skipped_conflict + skipped_read_error
+    print(
+        f"Summary: total notes (search)={total_notes}; "
+        f"skipped={skipped} "
+        f"(title mismatch={skipped_title}, unchanged={skipped_unchanged}, "
+        f"conflict skip={skipped_conflict}, read error={skipped_read_error}); "
+        f"new={exported}"
+    )
 
     if exported == 0:
         print(
