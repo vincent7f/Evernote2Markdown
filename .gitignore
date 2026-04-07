@@ -1,2 +1,5 @@
 # Exported Markdown (default: output/)
 output/
+
+__pycache__/
+*.py[cod]
