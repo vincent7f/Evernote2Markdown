@@ -9,7 +9,7 @@ Authentication: set EVERNOTE_TOKEN or pass --token. Obtain a developer token fro
 
 Example:
   export EVERNOTE_TOKEN="..."
-  python export_recent_md_titles.py ./out --days 7 --title md
+  python export_recent_md_titles.py ./output --days 7 --title md
 """
 
 from __future__ import annotations

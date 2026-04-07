@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Export Evernote China (印象笔记) notes. Output dir: $OUTPUT_DIR, else first arg if not a flag, else ./exported_md
+# Export Evernote China (印象笔记) notes. Output dir: $OUTPUT_DIR, else first arg if not a flag, else ./output
 set -eo pipefail
 cd "$(dirname "$0")"
 
@@ -31,7 +31,7 @@ if [[ -n "${1-}" && "$1" != -* ]]; then
   out="$1"
   shift
 fi
-out="${out:-exported_md}"
+out="${out:-output}"
 
 if command -v python3 >/dev/null 2>&1; then
   PYTHON=python3

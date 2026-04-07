@@ -8,8 +8,8 @@ set "_T=%EVERNOTE_TOKEN%"
 set "_T=%_T: =%"
 if "%_T%"=="" goto :no_token
 
-REM Output folder: set OUTPUT_DIR before running, or default exported_md
-if "%OUTPUT_DIR%"=="" set "OUTPUT_DIR=exported_md"
+REM Output folder: set OUTPUT_DIR before running, or default output
+if "%OUTPUT_DIR%"=="" set "OUTPUT_DIR=output"
 
 where python >nul 2>&1
 if %errorlevel%==0 (
