@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 
 REM Reject missing or whitespace-only EVERNOTE_TOKEN before calling Python
@@ -11,11 +11,29 @@ if "%_T%"=="" goto :no_token
 REM Output folder: set OUTPUT_DIR before running, or default output
 if "%OUTPUT_DIR%"=="" set "OUTPUT_DIR=output"
 
+REM Optional first arg: days window. Default 7; <=0 means all notes.
+set "DAYS=7"
+if not "%~1"=="" (
+    set "ARG1_NONNUM="
+    for /f "delims=0123456789-" %%A in ("%~1") do set "ARG1_NONNUM=1"
+    if not defined ARG1_NONNUM if not "%~1"=="-" (
+        set "DAYS=%~1"
+        shift
+    )
+)
+set "EXTRA_ARGS=%1 %2 %3 %4 %5 %6 %7 %8 %9"
+
 where python >nul 2>&1
 if %errorlevel%==0 (
-    python export_recent_md_titles.py "%OUTPUT_DIR%" --china --days 7 --title md %*
+    set "PYTHON_CMD=python"
 ) else (
-    py -3 export_recent_md_titles.py "%OUTPUT_DIR%" --china --days 7 --title md %*
+    set "PYTHON_CMD=py -3"
+)
+
+if %DAYS% LEQ 0 (
+    %PYTHON_CMD% export_recent_md_titles.py "%OUTPUT_DIR%" --china --title md !EXTRA_ARGS!
+) else (
+    %PYTHON_CMD% export_recent_md_titles.py "%OUTPUT_DIR%" --china --days %DAYS% --title md !EXTRA_ARGS!
 )
 if errorlevel 1 pause
 goto :eof

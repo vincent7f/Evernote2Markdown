@@ -97,7 +97,10 @@ def _parse_args() -> argparse.Namespace:
         "--days",
         type=int,
         default=7,
-        help="Only notes updated within this many days (Evernote search: updated:day-N).",
+        help=(
+            "Only notes updated within this many days (Evernote search: updated:day-N). "
+            "Use 0 or negative to search all notes."
+        ),
     )
     p.add_argument(
         "--title",
@@ -143,10 +146,8 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _build_search_words(days: int) -> str:
-    if days < 0:
-        raise ValueError("--days must be non-negative")
-    if days == 0:
-        return "updated:day"
+    if days <= 0:
+        return ""
     return f"updated:day-{days}"
 
 
