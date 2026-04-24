@@ -7,15 +7,33 @@ set "_T=%EVERNOTE_TOKEN%"
 set "_T=%_T: =%"
 if "%_T%"=="" goto :no_token
 
+set "_MARKDOWN_OUTPUT_FOLDER="
+set "_MARKDOWN_OUTPUT_FOLDER_EXISTS=0"
+set "_MARKDOWN_OUTPUT_FOLDER_DEFINED=0"
 if defined MARKDOWN_OUTPUT_FOLDER (
-    if exist "%MARKDOWN_OUTPUT_FOLDER%\NUL" (
-        set "OUTPUT_DIR=%MARKDOWN_OUTPUT_FOLDER%"
+    set "_MARKDOWN_OUTPUT_FOLDER_DEFINED=1"
+    for %%A in ("%MARKDOWN_OUTPUT_FOLDER%") do set "_MARKDOWN_OUTPUT_FOLDER=%%~A"
+)
+if defined _MARKDOWN_OUTPUT_FOLDER (
+    pushd "%_MARKDOWN_OUTPUT_FOLDER%" >nul 2>&1
+    if not errorlevel 1 (
+        popd
+        set "_MARKDOWN_OUTPUT_FOLDER_EXISTS=1"
+        set "OUTPUT_DIR=%_MARKDOWN_OUTPUT_FOLDER%"
     ) else (
+        popd >nul 2>&1
         if "%OUTPUT_DIR%"=="" set "OUTPUT_DIR=output"
     )
 ) else (
     if "%OUTPUT_DIR%"=="" set "OUTPUT_DIR=output"
 )
+for %%I in ("%OUTPUT_DIR%") do set "OUTPUT_DIR=%%~fI"
+if "%OUTPUT_DIR:~-1%"=="\" (
+    if not "%OUTPUT_DIR:~3%"=="" (
+        set "OUTPUT_DIR=%OUTPUT_DIR:~0,-1%"
+    )
+)
+echo Output directory: "%OUTPUT_DIR%"
 
 set "DAYS=7"
 if not "%~1"=="" (
