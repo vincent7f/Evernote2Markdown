@@ -69,6 +69,14 @@ from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
 from evernote.edam.error.ttypes import EDAMUserException, EDAMSystemException
 
 
+def _normalize_token(raw: str) -> str:
+    """Trim whitespace and optional surrounding quotes from token."""
+    token = (raw or "").strip()
+    if len(token) >= 2 and token[0] == token[-1] and token[0] in ("'", '"'):
+        token = token[1:-1].strip()
+    return token
+
+
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description=(
@@ -297,7 +305,8 @@ def iter_note_guids(
 
 def main() -> int:
     args = _parse_args()
-    if not args.token.strip():
+    token = _normalize_token(args.token)
+    if not token:
         print("Error: missing API token. Set EVERNOTE_TOKEN or pass --token.", file=sys.stderr)
         if args.china:
             print(
@@ -321,11 +330,39 @@ def main() -> int:
     os.makedirs(out_dir, exist_ok=True)
 
     client = EvernoteClient(
-        token=args.token.strip(),
+        token=token,
         sandbox=args.sandbox,
         china=args.china,
     )
-    note_store = client.get_note_store()
+    try:
+        note_store = client.get_note_store()
+    except EDAMUserException as e:
+        if getattr(e, "errorCode", None) == 9 and getattr(e, "parameter", "") == "authenticationToken":
+            print("Error: authenticationToken invalid/expired.", file=sys.stderr)
+            if args.china:
+                print(
+                    "  Please generate a new Yinxiang token from:",
+                    file=sys.stderr,
+                )
+                print(
+                    "  https://app.yinxiang.com/api/DeveloperToken.action",
+                    file=sys.stderr,
+                )
+                print(
+                    "  Also ensure you are using --china (run_china.bat does this by default).",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    "  Please generate a new Evernote token for your selected service.",
+                    file=sys.stderr,
+                )
+            print(
+                "  Tip: avoid wrapping token with quotes when setting EVERNOTE_TOKEN.",
+                file=sys.stderr,
+            )
+            return 1
+        raise
 
     search = _build_search_words(args.days)
     title_want = args.title.strip().casefold()
